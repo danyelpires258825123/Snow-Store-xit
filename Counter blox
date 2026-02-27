@@ -1,0 +1,450 @@
+--// SnowXIT UI | LocalScript (PC + MOBILE)
+--// AIMBOT + TEAMCHECK + WALLCHECK + FOV + ESP BOX + HEALTH BAR + SKELETON + NAME + TRACER
+--// LINK: https://discord.gg/rjTNf4mb8
+--// 2025
+
+repeat task.wait() until game:IsLoaded()
+
+-- Services
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local Camera = workspace.CurrentCamera
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Config
+local DISCORD_LINK = "https://discord.gg/rjTNf4mb8"
+
+-- State
+local State = {
+	Aimbot = false, AimbotPart = "Cabeça", TeamCheck = true,
+	WallCheck = true, ShowFOV = false, FOVSize = 200,
+	ESP_Box = false, ESP_Health = false, ESP_Skeleton = false,
+	ESP_Name = false, Tracer = false
+}
+
+-- GUI
+local ScreenGui = Instance.new("ScreenGui", PlayerGui)
+ScreenGui.ResetOnSpawn = false
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Toggle Button
+local ToggleButton = Instance.new("ImageButton", ScreenGui)
+ToggleButton.Size = UDim2.fromOffset(60,60)
+ToggleButton.Position = UDim2.fromScale(0.08,0.4)
+ToggleButton.Image = "rbxassetid://113108067983330"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(25,25,25)
+ToggleButton.Active, ToggleButton.Draggable, ToggleButton.AutoButtonColor = true, true, false
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(1,0)
+
+-- Panel
+local Panel = Instance.new("Frame", ScreenGui)
+Panel.Size = UDim2.fromOffset(360,520)
+Panel.Position = UDim2.fromScale(0.35,0.25)
+Panel.BackgroundColor3 = Color3.fromRGB(18,18,18)
+Panel.Visible, Panel.Active, Panel.Draggable = false, true, true
+Panel.ClipsDescendants = true
+Instance.new("UICorner", Panel).CornerRadius = UDim.new(0,12)
+
+-- Title
+local Title = Instance.new("TextLabel", Panel)
+Title.Size = UDim2.new(1,0,0,40)
+Title.BackgroundColor3 = Color3.fromRGB(180,0,0)
+Title.Text, Title.TextColor3, Title.Font, Title.TextSize = "Painel SnowXIT | FPS Flick", Color3.new(1,1,1), Enum.Font.GothamBold, 14
+
+-- Close Button
+local CloseBtn = Instance.new("TextButton", Title)
+CloseBtn.Size, CloseBtn.Position = UDim2.fromOffset(35,35), UDim2.new(1,-38,0,2)
+CloseBtn.Text, CloseBtn.Font, CloseBtn.TextSize, CloseBtn.TextColor3, CloseBtn.BackgroundTransparency = "X", Enum.Font.GothamBold, 16, Color3.new(1,1,1), 1
+CloseBtn.MouseButton1Click:Connect(function() Panel.Visible = false end)
+
+-- Tabs
+local Tabs = Instance.new("Frame", Panel)
+Tabs.Position, Tabs.Size = UDim2.fromOffset(0,40), UDim2.new(1,0,0,35)
+Tabs.BackgroundTransparency = 1
+
+local function CreateTab(name,x)
+	local b = Instance.new("TextButton", Tabs)
+	b.Size, b.Position = UDim2.fromOffset(100,30), UDim2.fromOffset(x,2)
+	b.Text, b.Font, b.TextSize, b.BackgroundColor3, b.TextColor3 = name, Enum.Font.GothamBold, 13, Color3.fromRGB(30,30,30), Color3.new(1,1,1)
+	Instance.new("UICorner", b).CornerRadius = UDim.new(0,6)
+	return b
+end
+
+local TabAimbot, TabVisual, TabDiscord = CreateTab("Aimbot",10), CreateTab("Visual",120), CreateTab("Discord",230)
+
+-- Pages
+local function CreatePage()
+	local f = Instance.new("Frame", Panel)
+	f.Position, f.Size = UDim2.fromOffset(0,80), UDim2.new(1,0,1,-80)
+	f.BackgroundTransparency, f.Visible = 1, false
+	return f
+end
+
+local AimbotPage, VisualPage, DiscordPage = CreatePage(), CreatePage(), CreatePage()
+AimbotPage.Visible = true
+
+-- Checkbox
+local function CreateCheckbox(parent, text, y, callback)
+	local container = Instance.new("Frame", parent)
+	container.Size, container.Position, container.BackgroundColor3 = UDim2.new(0.9,0,0,34), UDim2.fromOffset(15,y), Color3.fromRGB(35,35,35)
+	Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
+	
+	local checkbox = Instance.new("Frame", container)
+	checkbox.Size, checkbox.Position, checkbox.BackgroundColor3, checkbox.BorderSizePixel, checkbox.BorderColor3 = UDim2.fromOffset(22,22), UDim2.fromOffset(10,6), Color3.fromRGB(0,0,0), 2, Color3.fromRGB(60,60,60)
+	Instance.new("UICorner", checkbox).CornerRadius = UDim.new(0,5)
+	
+	local checkmark = Instance.new("TextLabel", checkbox)
+	checkmark.Size, checkmark.BackgroundTransparency, checkmark.Text, checkmark.TextColor3, checkmark.Font, checkmark.TextSize, checkmark.Visible = UDim2.new(1,0,1,0), 1, "✓", Color3.new(1,1,1), Enum.Font.GothamBold, 16, false
+	
+	local label = Instance.new("TextLabel", container)
+	label.Position, label.Size, label.BackgroundTransparency, label.Text, label.TextColor3, label.Font, label.TextSize, label.TextXAlignment = UDim2.fromOffset(40,0), UDim2.new(1,-50,1,0), 1, text, Color3.new(1,1,1), Enum.Font.GothamSemibold, 13, Enum.TextXAlignment.Left
+	
+	local btn, state = Instance.new("TextButton", container), false
+	btn.Size, btn.BackgroundTransparency, btn.Text = UDim2.new(1,0,1,0), 1, ""
+	
+	local function Update()
+		checkbox.BackgroundColor3 = state and Color3.fromRGB(200,30,30) or Color3.fromRGB(0,0,0)
+		checkbox.BorderColor3 = state and Color3.fromRGB(255,80,80) or Color3.fromRGB(60,60,60)
+		checkmark.Visible = state
+	end
+	
+	btn.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			state = not state; Update(); callback(state)
+		end
+	end)
+	btn.MouseEnter:Connect(function() container.BackgroundColor3 = Color3.fromRGB(45,45,45) end)
+	btn.MouseLeave:Connect(function() container.BackgroundColor3 = Color3.fromRGB(35,35,35) end)
+	return container
+end
+
+-- Dropdown
+local function CreateDropdown(parent, text, y, options, default, callback)
+	local container = Instance.new("Frame", parent)
+	container.Size, container.Position, container.BackgroundColor3, container.ZIndex = UDim2.new(0.9,0,0,34), UDim2.fromOffset(15,y), Color3.fromRGB(35,35,35), 10
+	Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
+	
+	local isOpen, selected = false, default
+	
+	local label = Instance.new("TextLabel", container)
+	label.Position, label.Size, label.BackgroundTransparency, label.Text, label.TextColor3, label.Font, label.TextSize, label.TextXAlignment, label.ZIndex = UDim2.fromOffset(10,0), UDim2.new(0.4,0,0,34), 1, text..":", Color3.new(1,1,1), Enum.Font.GothamSemibold, 13, Enum.TextXAlignment.Left, 11
+	
+	local display = Instance.new("TextButton", container)
+	display.Position, display.Size, display.BackgroundColor3, display.Text, display.TextColor3, display.Font, display.TextSize, display.TextXAlignment, display.ZIndex = UDim2.fromOffset(110,4), UDim2.new(0,140,0,26), Color3.fromRGB(50,50,50), "  "..selected, Color3.new(1,1,1), Enum.Font.Gotham, 12, Enum.TextXAlignment.Left, 11
+	Instance.new("UICorner", display).CornerRadius = UDim.new(0,6)
+	
+	local arrow = Instance.new("TextLabel", display)
+	arrow.Position, arrow.Size, arrow.BackgroundTransparency, arrow.Text, arrow.TextColor3, arrow.Font, arrow.TextSize, arrow.ZIndex = UDim2.new(1,-20,0,0), UDim2.fromOffset(20,26), 1, "▼", Color3.new(1,1,1), Enum.Font.GothamBold, 10, 12
+	
+	local optionsFrame = Instance.new("Frame", parent)
+	optionsFrame.Position, optionsFrame.Size, optionsFrame.BackgroundColor3, optionsFrame.Visible, optionsFrame.ZIndex = UDim2.fromOffset(125,y+34), UDim2.new(0,140,0,#options*28), Color3.fromRGB(45,45,45), false, 20
+	Instance.new("UICorner", optionsFrame).CornerRadius = UDim.new(0,6)
+	
+	for i, option in ipairs(options) do
+		local optBtn = Instance.new("TextButton", optionsFrame)
+		optBtn.Position, optBtn.Size, optBtn.BackgroundColor3, optBtn.Text, optBtn.TextColor3, optBtn.Font, optBtn.TextSize, optBtn.TextXAlignment, optBtn.ZIndex = UDim2.fromOffset(0,(i-1)*28), UDim2.new(1,0,0,28), Color3.fromRGB(45,45,45), "  "..option, Color3.new(1,1,1), Enum.Font.Gotham, 12, Enum.TextXAlignment.Left, 21
+		optBtn.MouseEnter:Connect(function() optBtn.BackgroundColor3 = Color3.fromRGB(70,70,70) end)
+		optBtn.MouseLeave:Connect(function() optBtn.BackgroundColor3 = Color3.fromRGB(45,45,45) end)
+		optBtn.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				selected, display.Text = option, "  "..option; callback(option); isOpen = false; optionsFrame.Visible = false; arrow.Text = "▼"
+			end
+		end)
+	end
+	
+	display.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			isOpen = not isOpen; optionsFrame.Visible = isOpen; arrow.Text = isOpen and "▲" or "▼"; optionsFrame.Position = UDim2.fromOffset(125,y+34)
+		end
+	end)
+	return container
+end
+
+-- Slider (PC + Mobile)
+local function CreateSlider(parent, text, y, min, max, default, callback)
+	local container = Instance.new("Frame", parent)
+	container.Size, container.Position, container.BackgroundColor3 = UDim2.new(0.9,0,0,55), UDim2.fromOffset(15,y), Color3.fromRGB(35,35,35)
+	Instance.new("UICorner", container).CornerRadius = UDim.new(0,8)
+	
+	local label = Instance.new("TextLabel", container)
+	label.Size, label.Position, label.BackgroundTransparency, label.Text, label.TextColor3, label.Font, label.TextSize, label.TextXAlignment = UDim2.new(1,-20,0,22), UDim2.fromOffset(10,6), 1, text..": "..default, Color3.new(1,1,1), Enum.Font.GothamSemibold, 12, Enum.TextXAlignment.Left
+	
+	local track = Instance.new("Frame", container)
+	track.Position, track.Size, track.BackgroundColor3 = UDim2.fromOffset(12,32), UDim2.new(1,-24,0,8), Color3.fromRGB(50,50,50)
+	Instance.new("UICorner", track).CornerRadius = UDim.new(0,4)
+	
+	local fill = Instance.new("Frame", track)
+	fill.BackgroundColor3, fill.Size, fill.BorderSizePixel = Color3.fromRGB(200,40,40), UDim2.fromScale((default-min)/(max-min),1), 0
+	Instance.new("UICorner", fill).CornerRadius = UDim.new(0,4)
+	
+	local thumb = Instance.new("Frame", track)
+	thumb.Size, thumb.Position, thumb.BackgroundColor3, thumb.BorderSizePixel = UDim2.fromOffset(16,16), UDim2.new((default-min)/(max-min),-8,0.5,-8), Color3.fromRGB(255,255,255), 0
+	Instance.new("UICorner", thumb).CornerRadius = UDim.new(1,0)
+	
+	local dragging = false
+	
+	local function Update(x)
+		local clamped = math.clamp(x,0,1)
+		fill.Size, thumb.Position = UDim2.fromScale(clamped,1), UDim2.new(clamped,-8,0.5,-8)
+		local value = math.floor(min+(max-min)*clamped)
+		label.Text = text..": "..value
+		callback(value)
+	end
+	
+	track.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true; Panel.Draggable = false; Update((input.Position.X-track.AbsolutePosition.X)/track.AbsoluteSize.X)
+		end
+	end)
+	
+	UIS.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+			Update((input.Position.X-track.AbsolutePosition.X)/track.AbsoluteSize.X)
+		end
+	end)
+	
+	UIS.InputEnded:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging, Panel.Draggable = false, true
+		end
+	end)
+end
+
+-- FOV Circle
+local FOV = Drawing.new("Circle")
+FOV.Color, FOV.Thickness, FOV.NumSides, FOV.Filled, FOV.Visible = Color3.fromRGB(255,0,0), 2, 64, false, false
+
+-- Team Check
+local function IsEnemy(plr) return not State.TeamCheck or not Player.Team or not plr.Team or plr.Team ~= Player.Team end
+
+-- Aimbot
+local function GetAimbotPart(char)
+	if not char then return nil end
+	if State.AimbotPart == "Cabeça" then return char:FindFirstChild("Head") end
+	return char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso") or char:FindFirstChild("HumanoidRootPart")
+end
+
+local function ClearVision(part, char)
+	local params = RaycastParams.new()
+	params.FilterType, params.FilterDescendantsInstances = Enum.RaycastFilterType.Blacklist, {Player.Character, Camera}
+	local ray = workspace:Raycast(Camera.CFrame.Position, part.Position-Camera.CFrame.Position, params)
+	return not ray or ray.Instance:IsDescendantOf(char)
+end
+
+local function GetTarget()
+	local closest, dist, center = nil, State.FOVSize, Camera.ViewportSize/2
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= Player and plr.Character and IsEnemy(plr) then
+			local part = GetAimbotPart(plr.Character)
+			if part then
+				local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+				if hum and hum.Health > 0 then
+					local pos, vis = Camera:WorldToViewportPoint(part.Position)
+					if vis then
+						local mag = (Vector2.new(pos.X,pos.Y)-center).Magnitude
+						if mag < dist and (not State.WallCheck or ClearVision(part, plr.Character)) then
+							dist, closest = mag, part
+						end
+					end
+				end
+			end
+		end
+	end
+	return closest
+end
+
+-- ESP System
+local ESP = {}
+local FIXED_BOX_WIDTH, FIXED_BOX_HEIGHT, FIXED_BAR_WIDTH = 35, 55, 3
+
+local function NewESP(plr)
+	if plr == Player then return end
+	local box = Drawing.new("Square"); box.Thickness, box.Filled, box.Visible = 1, false, false
+	local healthBarBg = Drawing.new("Square"); healthBarBg.Thickness, healthBarBg.Filled, healthBarBg.Color, healthBarBg.Visible = 1, true, Color3.fromRGB(0,0,0), false
+	local healthBarFill = Drawing.new("Square"); healthBarFill.Thickness, healthBarFill.Filled, healthBarFill.Visible = 1, true, false
+	local skeletonLines = {}
+	for i = 1, 15 do 
+		local line = Drawing.new("Line")
+		line.Thickness, line.Color, line.Visible = 1.5, Color3.fromRGB(255,0,0), false
+		table.insert(skeletonLines, line)
+	end
+	local name = Drawing.new("Text"); name.Center, name.Outline, name.Size, name.Color, name.Visible = true, true, 12, Color3.new(1,1,1), false
+	local dist = Drawing.new("Text"); dist.Center, dist.Outline, dist.Size, dist.Color, dist.Visible = true, true, 10, Color3.new(1,1,1), false
+	local tracer = Drawing.new("Line"); tracer.Thickness, tracer.Color, tracer.Visible = 1, Color3.fromRGB(255,0,0), false
+	ESP[plr] = {box=box, healthBarBg=healthBarBg, healthBarFill=healthBarFill, skeleton=skeletonLines, name=name, dist=dist, tracer=tracer}
+end
+
+for _, p in pairs(Players:GetPlayers()) do NewESP(p) end
+Players.PlayerAdded:Connect(NewESP)
+Players.PlayerRemoving:Connect(function(plr)
+	if ESP[plr] then for _, v in pairs(ESP[plr]) do if typeof(v) == "table" then for _, l in pairs(v) do l:Remove() end else v:Remove() end end; ESP[plr] = nil end
+end)
+
+local function UpdateESP()
+	for plr, obj in pairs(ESP) do
+		local char = plr.Character
+		if char and char:FindFirstChild("HumanoidRootPart") and char:FindFirstChild("Head") and char:FindFirstChildOfClass("Humanoid") then
+			local hrp, head, hum = char.HumanoidRootPart, char.Head, char:FindFirstChildOfClass("Humanoid")
+			local pos, vis = Camera:WorldToViewportPoint(hrp.Position)
+			if vis then
+				local distance, cx, cy = (hrp.Position-Camera.CFrame.Position).Magnitude, pos.X, pos.Y
+				local bw, bh = FIXED_BOX_WIDTH, FIXED_BOX_HEIGHT
+				local bPos = Vector2.new(cx-bw/2, cy-bh/2)
+				local isEnemy = IsEnemy(plr)
+				
+				if State.ESP_Box then
+					if isEnemy then
+						obj.box.Size, obj.box.Position, obj.box.Color, obj.box.Visible = Vector2.new(bw,bh), bPos, Color3.fromRGB(255,0,0), true
+						obj.dist.Text, obj.dist.Position, obj.dist.Size, obj.dist.Visible = math.floor(distance).."m", Vector2.new(cx,bPos.Y+bh+4), 10, true
+					else
+						obj.box.Size, obj.box.Position, obj.box.Color, obj.box.Visible = Vector2.new(bw,bh), bPos, Color3.fromRGB(100,200,255), true
+						obj.dist.Visible = false
+					end
+				else
+					obj.box.Visible, obj.dist.Visible = false, false
+				end
+				
+				if State.ESP_Health and isEnemy then
+					local hp = math.clamp(hum.Health/hum.MaxHealth,0,1)
+					local bh2 = bh-2
+					obj.healthBarBg.Size, obj.healthBarBg.Position, obj.healthBarBg.Visible = Vector2.new(FIXED_BAR_WIDTH,bh2), Vector2.new(bPos.X-6,bPos.Y+1), true
+					obj.healthBarFill.Size = Vector2.new(FIXED_BAR_WIDTH-1,(bh2-1)*hp)
+					obj.healthBarFill.Position = Vector2.new(bPos.X-5.5,bPos.Y+1+(bh2-1)*(1-hp)+0.5)
+					obj.healthBarFill.Color = hp > 0.6 and Color3.fromRGB(0,255,0) or (hp > 0.3 and Color3.fromRGB(255,255,0) or Color3.fromRGB(255,0,0))
+					obj.healthBarFill.Visible = true
+				else
+					obj.healthBarBg.Visible, obj.healthBarFill.Visible = false, false
+				end
+				
+				if State.ESP_Skeleton and isEnemy then
+					local function gp(part, off)
+						if char:FindFirstChild(part) then
+							local p = char[part].Position + (off or Vector3.new(0,0,0))
+							local sp, v = Camera:WorldToViewportPoint(p)
+							if v then return Vector2.new(sp.X,sp.Y) end
+						end
+						return nil
+					end
+					
+					-- Pontos compactos
+					local head = gp("Head")
+					local neck = gp("Head", Vector3.new(0,-0.3,0))
+					local torso = gp("UpperTorso") or gp("Torso")
+					local pelvis = gp("LowerTorso") or gp("Torso", Vector3.new(0,-0.8,0))
+					
+					-- Braços
+					local lShoulder = gp("LeftUpperArm") or gp("Left Arm", Vector3.new(0,0.3,0))
+					local lElbow = gp("LeftLowerArm") or gp("Left Arm")
+					local lHand = gp("LeftHand") or gp("Left Arm", Vector3.new(0,-0.3,0))
+					
+					local rShoulder = gp("RightUpperArm") or gp("Right Arm", Vector3.new(0,0.3,0))
+					local rElbow = gp("RightLowerArm") or gp("Right Arm")
+					local rHand = gp("RightHand") or gp("Right Arm", Vector3.new(0,-0.3,0))
+					
+					-- Pernas
+					local lHip = gp("LeftUpperLeg") or gp("Left Leg", Vector3.new(0,0.3,0))
+					local lKnee = gp("LeftLowerLeg") or gp("Left Leg")
+					local lFoot = gp("LeftFoot") or gp("Left Leg", Vector3.new(0,-0.3,0))
+					
+					local rHip = gp("RightUpperLeg") or gp("Right Leg", Vector3.new(0,0.3,0))
+					local rKnee = gp("RightLowerLeg") or gp("Right Leg")
+					local rFoot = gp("RightFoot") or gp("Right Leg", Vector3.new(0,-0.3,0))
+					
+					-- 15 linhas: cabeça, tronco, braços, pernas
+					local lines = {
+						{head, neck},           -- 1: Cabeça
+						{neck, torso},          -- 2: Pescoço
+						{torso, pelvis},        -- 3: Tronco
+						{neck, lShoulder},      -- 4: Braço esq cima
+						{lShoulder, lElbow},    -- 5: Cotovelo esq
+						{lElbow, lHand},        -- 6: Mão esq
+						{neck, rShoulder},      -- 7: Braço dir cima
+						{rShoulder, rElbow},    -- 8: Cotovelo dir
+						{rElbow, rHand},        -- 9: Mão dir
+						{pelvis, lHip},         -- 10: Perna esq cima
+						{lHip, lKnee},          -- 11: Joelho esq
+						{lKnee, lFoot},         -- 12: Pé esq
+						{pelvis, rHip},         -- 13: Perna dir cima
+						{rHip, rKnee},          -- 14: Joelho dir
+						{rKnee, rFoot},         -- 15: Pé dir
+					}
+					
+					for i=1,15 do
+						local c = lines[i]
+						if c and c[1] and c[2] and obj.skeleton[i] then 
+							obj.skeleton[i].From, obj.skeleton[i].To, obj.skeleton[i].Visible = c[1], c[2], true 
+						elseif obj.skeleton[i] then 
+							obj.skeleton[i].Visible = false 
+						end
+					end
+				else
+					for _, l in ipairs(obj.skeleton) do l.Visible = false end
+				end
+				
+				if State.ESP_Name and isEnemy then
+					obj.name.Text, obj.name.Position, obj.name.Size, obj.name.Color, obj.name.Visible = plr.Name, Vector2.new(cx,bPos.Y-12), 12, Color3.new(1,1,1), true
+				else
+					obj.name.Visible = false
+				end
+				
+				if State.Tracer and isEnemy then
+					obj.tracer.From, obj.tracer.To, obj.tracer.Visible = Vector2.new(Camera.ViewportSize.X/2,Camera.ViewportSize.Y), Vector2.new(cx,bPos.Y+bh), true
+				else
+					obj.tracer.Visible = false
+				end
+			else
+				for k, v in pairs(obj) do if k == "skeleton" then for _, l in ipairs(v) do l.Visible = false end else v.Visible = false end end
+			end
+		else
+			for k, v in pairs(obj) do if k == "skeleton" then for _, l in ipairs(v) do l.Visible = false end else v.Visible = false end end
+		end
+	end
+end
+
+-- Render Loop
+RunService.RenderStepped:Connect(function()
+	FOV.Position, FOV.Radius, FOV.Visible = Camera.ViewportSize/2, State.FOVSize, State.ShowFOV
+	if State.Aimbot then local t = GetTarget(); if t then Camera.CFrame = CFrame.new(Camera.CFrame.Position, t.Position) end end
+	UpdateESP()
+end)
+
+-- UI Content
+CreateCheckbox(AimbotPage, "Aimbot", 10, function(v) State.Aimbot = v end)
+CreateCheckbox(AimbotPage, "WallCheck", 50, function(v) State.TeamCheck = v end)
+CreateCheckbox(AimbotPage, "Verificar Paredes", 90, function(v) State.WallCheck = v end)
+CreateCheckbox(AimbotPage, "Mostrar FOV", 130, function(v) State.ShowFOV = v end)
+CreateDropdown(AimbotPage, "Mirar em", 170, {"Cabeça", "Tronco"}, "Cabeça", function(v) State.AimbotPart = v end)
+CreateSlider(AimbotPage, "Tamanho FOV", 220, 50, 600, 200, function(v) State.FOVSize = v end)
+
+CreateCheckbox(VisualPage, "ESP Box", 10, function(v) State.ESP_Box = v end)
+CreateCheckbox(VisualPage, "Barra de Vida", 50, function(v) State.ESP_Health = v end)
+CreateCheckbox(VisualPage, "Skeleton", 90, function(v) State.ESP_Skeleton = v end)
+CreateCheckbox(VisualPage, "Mostrar Nome", 130, function(v) State.ESP_Name = v end)
+CreateCheckbox(VisualPage, "Tracer", 170, function(v) State.Tracer = v end)
+
+-- Discord Tab
+local DiscordContainer = Instance.new("Frame", DiscordPage)
+DiscordContainer.Size, DiscordContainer.Position, DiscordContainer.BackgroundColor3 = UDim2.new(0.9,0,0,50), UDim2.fromOffset(15,20), Color3.fromRGB(35,35,35)
+Instance.new("UICorner", DiscordContainer).CornerRadius = UDim.new(0,8)
+
+local DiscordBtn = Instance.new("TextButton", DiscordContainer)
+DiscordBtn.Size, DiscordBtn.Position = UDim2.new(1,-20,0,36), UDim2.fromOffset(10,7)
+DiscordBtn.Text, DiscordBtn.Font, DiscordBtn.TextSize, DiscordBtn.TextColor3, DiscordBtn.BackgroundColor3 = "🔗 Join Discord", Enum.Font.GothamBold, 14, Color3.fromRGB(255,100,100), Color3.fromRGB(60,20,20)
+Instance.new("UICorner", DiscordBtn).CornerRadius = UDim.new(0,6)
+
+DiscordBtn.MouseEnter:Connect(function() DiscordBtn.BackgroundColor3, DiscordBtn.TextColor3 = Color3.fromRGB(80,30,30), Color3.fromRGB(255,120,120) end)
+DiscordBtn.MouseLeave:Connect(function() DiscordBtn.BackgroundColor3, DiscordBtn.TextColor3 = Color3.fromRGB(60,20,20), Color3.fromRGB(255,100,100) end)
+DiscordBtn.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+		if setclipboard then setclipboard(DISCORD_LINK); DiscordBtn.Text = "✅ Link Copiado!"; task.wait(2); DiscordBtn.Text = "🔗 Join Discord" end
+	end
+end)
+
+-- Tab Switch
+local function ShowPage(p) AimbotPage.Visible, VisualPage.Visible, DiscordPage.Visible, p.Visible = false, false, false, true end
+TabAimbot.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then ShowPage(AimbotPage) end end)
+TabVisual.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then ShowPage(VisualPage) end end)
+TabDiscord.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then ShowPage(DiscordPage) end end)
+ToggleButton.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then Panel.Visible = not Panel.Visible end end)
